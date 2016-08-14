@@ -98,7 +98,10 @@ function removeDeployment(hash) {
           const lines = data.split('\n')
           if (program.verbose) console.log(lines[0])
           console.log(lines[1])
-          rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => nowrm.stdin.end(input))
+          if (program.all)
+            nowrm.stdin.end('y')
+          else
+            rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => nowrm.stdin.end(input))
         } else {
           if (program.verbose) console.log(data)
         }
