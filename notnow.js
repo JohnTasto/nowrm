@@ -1,10 +1,8 @@
-const t2 = require('through2')
+const spawn = require('child_process').spawn
+const readline = require('readline')
 const split = require('split')
 
-const readline = require('readline')
-const spawn = require('child_process').spawn
-
-var program = require('commander');
+const program = require('commander')
 
 
 function list(val) {
@@ -49,18 +47,17 @@ const nowls = spawn('now', ['ls'])
 
 nowls.stdout
   .pipe(split())
-  .pipe(t2((chunk, encoding, next) => {
-    hashes.push(chunk.toString().slice(2, 26))
-    return next(null, `${chunk}\n`)
-  }))
-  .pipe(process.stdout)
+  .on('data', data => {
+    hashes.push(data.toString().slice(2, 26))
+    if (program.verbose) console.log(`${data}`)
+  })
 
 nowls.stderr.on('data', data => {
-  console.log(`now ls stderr: ${data}`)
+  console.error(`now ls stderr: ${data}`)
 })
 
 nowls.on('close', code => {
-  if (code !== 0) console.log(`now ls exited with code ${code}`)
+  if (code !== 0) console.error(`now ls exited with code ${code}`)
 
   hashes = hashes.slice(3, -2)
 
@@ -68,7 +65,9 @@ nowls.on('close', code => {
   hashes.forEach(hash => {
     result = result.then(() => removeDeployment(hash))
   })
-  result.then(() => console.log('Done!'))
+  result
+    .then(() => process.exit(0))
+    .catch(err => {console.error(err); process.exit(1)})
 })
 
 
@@ -80,7 +79,7 @@ function removeDeployment(hash) {
 
     nowrm.stdout
       .pipe(split('[yN] '))
-      .pipe(t2((chunk, encoding, next) => {
+      .on('data', data => {
         const rl = readline.createInterface({ input: process.stdin })
         if (!done) {
           rl.on('line', input => {
@@ -89,12 +88,11 @@ function removeDeployment(hash) {
             done = true
           })
           rl.on('SIGINT', () => process.exit(1))
-          return next(null, `${chunk}[yN] `)
+          console.log(`${data}[yN] `)
         } else {
-          return next(null, chunk)
+          console.log(data)
         }
-      }))
-      .pipe(process.stdout)
+      })
 
     nowrm.stderr.on('data', data => {
       return reject(`now rm stderr: ${data}`)
