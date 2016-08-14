@@ -13,9 +13,10 @@ program
   .version('0.0.1')
   .usage('[options]')
   .description('Automate romoval of now deployments.')
-  .option('-a, --all', 'remove all deployments')
-  .option('-r, --remove <hashes>', 'comma separated list of hashes to keep', list)
-  .option('-k, --keep <hashes>', 'comma separated list of hashes to keep', list)
+  .option('-a, --all', 'remove all deployments except those specified by --keep')
+  .option('-r, --remove <hashes>', 'comma separated list of deployments to remove', list)
+  .option('-k, --keep <hashes>', 'comma separated list of deployments to keep', list)
+  .option('-o, --old', 'only consider deployments older than the most recent for removal')
   .option('-v, --verbose', 'show additional output')
 
 program.on('--help', () => {
@@ -29,7 +30,7 @@ program.on('--help', () => {
       $ notnow --all
 
     Remove only the deployments specified:
-      $ notnow --all --remove <hash1>,<hash2>
+      $ notnow --remove <hash1>,<hash2>
 
     Remove all deployments except those specified:
       $ notnow --all --keep <hash1>,<hash2>
@@ -57,7 +58,10 @@ nowls.stderr.on('data', data => {
 })
 
 nowls.on('close', code => {
-  if (code !== 0) console.error(`now ls exited with code ${code}`)
+  if (code !== 0) {
+    console.error(`now ls exited with code ${code}`)
+    process.exit(1)
+  }
 
   hashes = hashes.slice(3, -2)
 
@@ -67,9 +71,18 @@ nowls.on('close', code => {
   })
   result
     .then(() => process.exit(0))
-    .catch(err => {console.error(err); process.exit(1)})
+    .catch(err => {
+      console.error(err)
+      process.exit(1)}
+    )
 })
 
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+})
+rl.on('SIGINT', () => process.exit(1))
 
 function removeDeployment(hash) {
   return new Promise((resolve, reject) => {
@@ -80,17 +93,14 @@ function removeDeployment(hash) {
     nowrm.stdout
       .pipe(split('[yN] '))
       .on('data', data => {
-        const rl = readline.createInterface({ input: process.stdin })
         if (!done) {
-          rl.on('line', input => {
-            nowrm.stdin.write(input)
-            rl.close()
-            done = true
-          })
-          rl.on('SIGINT', () => process.exit(1))
-          console.log(`${data}[yN] `)
+          done = true
+          const lines = data.split('\n')
+          if (program.verbose) console.log(lines[0])
+          console.log(lines[1])
+          rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => nowrm.stdin.end(input))
         } else {
-          console.log(data)
+          if (program.verbose) console.log(data)
         }
       })
 
