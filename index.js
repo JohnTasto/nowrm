@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const spawn = require('child_process').spawn
 const readline = require('readline')
 const split = require('split')

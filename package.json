@@ -1,17 +1,28 @@
 {
   "name": "notnow",
   "version": "0.0.1",
-  "description": "",
-  "main": "notnow.js",
+  "description": "Automated removal of now deployments",
+  "main": "index.js",
   "scripts": {
     "start": "node dummy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "John Tasto",
+  "author": {
+    "name": "John Tasto",
+    "email": "john@tasto.net"
+  },
   "license": "MIT",
   "dependencies": {
     "commander": "^2.9.0",
     "lodash": "^4.15.0",
     "split": "^1.0.0"
+  },
+  "bin": {
+    "notnow": "./index.js"
+  },
+  "preferGlobal": true,
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/JohnTasto/notnow.git"
   }
 }
