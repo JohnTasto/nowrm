@@ -1,22 +1,22 @@
 const spawn = require('child_process').spawn
 const readline = require('readline')
 const split = require('split')
+const _ = require('lodash')
 
 const program = require('commander')
 
 
 function list(val) {
-  return val.split(',').forEach(str => str.trim())
+  return val.split(',')
 }
 
 program
   .version('0.0.1')
   .usage('[options]')
-  .description('Automate romoval of now deployments.')
-  .option('-a, --all', 'remove all deployments except those specified by --keep')
-  .option('-r, --remove <hashes>', 'comma separated list of deployments to remove', list)
+  .description('Automate removal of now deployments.')
+  .option('-y, --yes', 'automatically confirm removal')
+  .option('-o, --old', 'keep the most recent deployment')
   .option('-k, --keep <hashes>', 'comma separated list of deployments to keep', list)
-  .option('-o, --old', 'only consider deployments older than the most recent for removal')
   .option('-v, --verbose', 'show additional output')
 
 program.on('--help', () => {
@@ -27,19 +27,15 @@ program.on('--help', () => {
       $ notnow
 
     Remove all deployments:
-      $ notnow --all
-
-    Remove only the deployments specified:
-      $ notnow --remove <hash1>,<hash2>
+      $ notnow --yes
 
     Remove all deployments except those specified:
-      $ notnow --all --keep <hash1>,<hash2>
+      $ notnow --yes --keep <hash1>,<hash2>
 
   `)
 })
 
 program.parse(process.argv)
-
 
 let hashes = []
 
@@ -63,7 +59,10 @@ nowls.on('close', code => {
     process.exit(1)
   }
 
-  hashes = hashes.slice(3, -2)
+  if (program.old) hashes = hashes.slice(4, -2)
+  else             hashes = hashes.slice(3, -2)
+
+  if (program.keep) hashes = _.difference(hashes, program.keep)
 
   var result = Promise.resolve()
   hashes.forEach(hash => {
@@ -98,7 +97,7 @@ function removeDeployment(hash) {
           const lines = data.split('\n')
           if (program.verbose) console.log(lines[0])
           console.log(lines[1])
-          if (program.all)
+          if (program.yes)
             nowrm.stdin.end('y')
           else
             rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => nowrm.stdin.end(input))

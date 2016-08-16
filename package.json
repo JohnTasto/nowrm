@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "commander": "^2.9.0",
+    "lodash": "^4.15.0",
     "split": "^1.0.0"
   }
 }
