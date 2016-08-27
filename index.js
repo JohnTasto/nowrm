@@ -52,7 +52,7 @@ nowls.stdout
   })
 
 nowls.stderr.on('data', data => {
-  console.error(`now ls stderr: ${data}`)
+  console.error(`now ls error: ${data}`)
 })
 
 nowls.on('close', code => {
@@ -74,8 +74,8 @@ nowls.on('close', code => {
     .then(() => process.exit(0))
     .catch(err => {
       console.error(err)
-      process.exit(1)}
-    )
+      process.exit(1)
+    })
 })
 
 
@@ -109,7 +109,7 @@ function removeDeployment(hash) {
       })
 
     nowrm.stderr.on('data', data => {
-      return reject(`now rm stderr: ${data}`)
+      console.error(`now rm error: ${data}`)
     })
 
     nowrm.on('close', code => {
