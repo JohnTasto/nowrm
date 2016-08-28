@@ -89,15 +89,9 @@ ls.on('close', code => {
     for (const project in projects) {
       if (!projects.hasOwnProperty(project)) continue
       projects[project] = projects[project].filter(deployment =>
-        program.keep.indexOf(deployment[0]) === -1
+        program.keep.indexOf(deployment) === -1
       )
     }
-  }
-
-  // remove any projects that are now empty
-  for (const project in projects) {
-    if (!projects.hasOwnProperty(project)) continue
-    if (projects[project].length === 0) delete projects[project]
   }
 
 
@@ -105,6 +99,7 @@ ls.on('close', code => {
   let result = Promise.resolve()
   for (const project in projects) {
     if (!projects.hasOwnProperty(project)) continue
+    if (projects[project].length === 0) continue
     result = result.then(() => {
       console.log(`\n${project}\n`)
       return Promise.resolve()
