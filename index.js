@@ -3,7 +3,7 @@
 const spawn = require('child_process').spawn
 const readline = require('readline')
 const split = require('split')
-
+const chalk = require('chalk')
 const program = require('commander')
 
 
@@ -51,12 +51,12 @@ ls.stdout
   })
 
 ls.stderr.on('data', data => {
-  console.error(`now ls error: ${data}`)
+  console.error(chalk.red.bold(`now ls error: ${data}`))
 })
 
 ls.on('close', code => {
   if (code !== 0) {
-    console.error(`now ls exited with code ${code}`)
+    console.error(chalk.red.bold(`now ls exited with code ${code}`))
     process.exit(1)
   }
 
@@ -70,7 +70,7 @@ ls.on('close', code => {
         currentProject = deployment
         projects[currentProject] = []
       } else {
-        projects[currentProject].push(deployment[0])
+        projects[currentProject].push(deployment)
       }
     })
 
@@ -89,7 +89,7 @@ ls.on('close', code => {
     for (const project in projects) {
       if (!projects.hasOwnProperty(project)) continue
       projects[project] = projects[project].filter(deployment =>
-        program.keep.indexOf(deployment) === -1
+        program.keep.indexOf(deployment[0]) === -1
       )
     }
   }
@@ -101,7 +101,7 @@ ls.on('close', code => {
     if (!projects.hasOwnProperty(project)) continue
     if (projects[project].length === 0) continue
     result = result.then(() => {
-      console.log(`\n${project}\n`)
+      console.log(`\n${chalk.bold(project)}\n`)
       return Promise.resolve()
     })
     projects[project].forEach(deployment => {
@@ -111,7 +111,7 @@ ls.on('close', code => {
   result
     .then(() => process.exit(0))
     .catch(err => {
-      console.error(err)
+      console.error(chalk.red.bold(err))
       process.exit(1)
     })
 })
@@ -125,7 +125,7 @@ rl.on('SIGINT', () => process.exit(1))
 
 function removeDeployment(deployment) {
   return new Promise((resolve, reject) => {
-    const rm = spawn('now', ['rm', deployment])
+    const rm = spawn('now', ['rm', deployment[0]])
 
     let done = false
 
@@ -136,18 +136,23 @@ function removeDeployment(deployment) {
           done = true
           const lines = data.split('\n')
           if (program.verbose) console.log(lines[0])
-          console.log(lines[1])
+          console.log(`  ${deployment[0]}      ${chalk.underline(deployment[1])}`
+                + `      ${chalk.gray(deployment[2])} ${chalk.gray(deployment[3])}`)
           if (program.yes)
             rm.stdin.end('y')
           else
-            rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => rm.stdin.end(`${input}\m`))
+            rl.question(program.verbose
+              ? `${chalk.red.bold(lines[2])}${chalk.gray('[yN]')} `
+              : `${chalk.red.bold('Remove?')} ${chalk.gray('[yN]')} `
+              , input => rm.stdin.end(`${input}\m`)
+            )
         } else {
           if (program.verbose) console.log(data)
         }
       })
 
     rm.stderr.on('data', data => {
-      console.error(`now rm error: ${data}`)
+      console.error(chalk.red.bold(`now rm error: ${data}`))
     })
 
     rm.on('close', code => {
