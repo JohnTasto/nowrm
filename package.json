@@ -13,7 +13,6 @@
   "license": "MIT",
   "dependencies": {
     "commander": "^2.9.0",
-    "lodash": "^4.15.0",
     "split": "^1.0.0"
   },
   "bin": {
@@ -21,7 +20,7 @@
   },
   "preferGlobal": true,
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/JohnTasto/notnow.git"
+    "type": "git",
+    "url": "https://github.com/JohnTasto/notnow.git"
   }
 }

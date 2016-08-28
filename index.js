@@ -3,7 +3,6 @@
 const spawn = require('child_process').spawn
 const readline = require('readline')
 const split = require('split')
-const _ = require('lodash')
 
 const program = require('commander')
 
@@ -17,8 +16,8 @@ program
   .usage('[options]')
   .description('Automate removal of now deployments.')
   .option('-y, --yes', 'automatically confirm removal')
-  .option('-o, --old', 'keep the most recent deployment')
-  .option('-k, --keep <hashes>', 'comma separated list of deployments to keep', list)
+  .option('-o, --old', 'ignore latest deployment of each project')
+  .option('-k, --keep <projects/hashes>', 'ignore specified projects and deployments', list)
   .option('-v, --verbose', 'show additional output')
 
 program.on('--help', () => {
@@ -32,44 +31,88 @@ program.on('--help', () => {
       $ notnow --yes
 
     Remove all deployments except those specified:
-      $ notnow --yes --keep <hash1>,<hash2>
+      $ notnow --yes --keep <project1>,<hash1>,<hash2>
 
   `)
 })
 
 program.parse(process.argv)
 
-let hashes = []
 
+const lsOut = []
 
-const nowls = spawn('now', ['ls'])
+const ls = spawn('now', ['ls'])
 
-nowls.stdout
+ls.stdout
   .pipe(split())
   .on('data', data => {
-    hashes.push(data.toString().slice(2, 26))
+    lsOut.push(data.toString().trim().split(/\s+/))   // split on whitespace
     if (program.verbose) console.log(`${data}`)
   })
 
-nowls.stderr.on('data', data => {
+ls.stderr.on('data', data => {
   console.error(`now ls error: ${data}`)
 })
 
-nowls.on('close', code => {
+ls.on('close', code => {
   if (code !== 0) {
     console.error(`now ls exited with code ${code}`)
     process.exit(1)
   }
 
-  if (program.old) hashes = hashes.slice(4, -2)
-  else             hashes = hashes.slice(3, -2)
+  // build projects data structure
+  const projects = {}
+  let currentProject
+  lsOut
+    .filter(line => line[0] !== '')   // remove blank lines
+    .forEach(deployment => {
+      if (deployment.length === 1) {
+        currentProject = deployment
+        projects[currentProject] = []
+      } else {
+        projects[currentProject].push(deployment[0])
+      }
+    })
 
-  if (program.keep) hashes = _.difference(hashes, program.keep)
+  if (program.old) {
+    for (const project in projects) {
+      if (!projects.hasOwnProperty(project)) continue
+      projects[project].shift()
+    }
+  }
 
-  var result = Promise.resolve()
-  hashes.forEach(hash => {
-    result = result.then(() => removeDeployment(hash))
-  })
+  if (program.keep) {
+    // remove projects specified in --keep
+    program.keep.forEach(project => delete projects[project])
+
+    // remove deployments specified in --keep
+    for (const project in projects) {
+      if (!projects.hasOwnProperty(project)) continue
+      projects[project] = projects[project].filter(deployment =>
+        program.keep.indexOf(deployment[0]) === -1
+      )
+    }
+  }
+
+  // remove any projects that are now empty
+  for (const project in projects) {
+    if (!projects.hasOwnProperty(project)) continue
+    if (projects[project].length === 0) delete projects[project]
+  }
+
+
+  // iterate through remaining projects in a weird async way
+  let result = Promise.resolve()
+  for (const project in projects) {
+    if (!projects.hasOwnProperty(project)) continue
+    result = result.then(() => {
+      console.log(`\n${project}\n`)
+      return Promise.resolve()
+    })
+    projects[project].forEach(deployment => {
+      result = result.then(() => removeDeployment(deployment))
+    })
+  }
   result
     .then(() => process.exit(0))
     .catch(err => {
@@ -85,13 +128,13 @@ const rl = readline.createInterface({
 })
 rl.on('SIGINT', () => process.exit(1))
 
-function removeDeployment(hash) {
+function removeDeployment(deployment) {
   return new Promise((resolve, reject) => {
-    const nowrm = spawn('now', ['rm', hash])
+    const rm = spawn('now', ['rm', deployment])
 
     let done = false
 
-    nowrm.stdout
+    rm.stdout
       .pipe(split('[yN] '))
       .on('data', data => {
         if (!done) {
@@ -100,19 +143,19 @@ function removeDeployment(hash) {
           if (program.verbose) console.log(lines[0])
           console.log(lines[1])
           if (program.yes)
-            nowrm.stdin.end('y')
+            rm.stdin.end('y')
           else
-            rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => nowrm.stdin.end(input))
+            rl.question(program.verbose ? `${lines[2]}[yN] ` : 'Remove? [yN] ', input => rm.stdin.end(`${input}\m`))
         } else {
           if (program.verbose) console.log(data)
         }
       })
 
-    nowrm.stderr.on('data', data => {
+    rm.stderr.on('data', data => {
       console.error(`now rm error: ${data}`)
     })
 
-    nowrm.on('close', code => {
+    rm.on('close', code => {
       if (code !== 0) return reject(`now rm exited with code ${code}`)
       return resolve()
     })

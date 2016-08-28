@@ -4,15 +4,11 @@
 
 Usage: `notnow [options]`
 
-#### Options:
 | Option | Description |
 | ---------- | ---------- |
-| `-h, --help` | output usage information |
-| `-V, --version` | output the version number |
 | `-y, --yes` | automatically confirm removal |
-| `-o, --old` | keep the most recent deployment |
-| `-k, --keep <hashes>` | comma separated list of deployments to keep |
-| `-v, --verbose` | show additional output |
+| `-o, --old' | ignore latest deployment of each project |
+| `-k, --keep <projects/hashes>` | ignore specified projects and deployments |
 
 #### Examples:
 
@@ -23,4 +19,4 @@ Usage: `notnow [options]`
 `$ notnow --yes`
 
 - Remove all deployments except those specified:  
-`$ notnow --yes --keep <hash1>,<hash2>`
+`$ notnow --yes --keep <project1>,<hash1>,<hash2>`
