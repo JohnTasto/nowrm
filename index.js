@@ -144,7 +144,7 @@ function removeDeployment(deployment) {
             rl.question(program.verbose
               ? `${chalk.red.bold(lines[2])}${chalk.gray('[yN]')} `
               : `${chalk.red.bold('Remove?')} ${chalk.gray('[yN]')} `
-              , input => rm.stdin.end(`${input}\m`)
+              , input => rm.stdin.end(`${input}\n`)
             )
         } else {
           if (program.verbose) console.log(data)
