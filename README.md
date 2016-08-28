@@ -1,8 +1,8 @@
-# notnow
+# nowrm
 
 #### Automate removal of [Zeit ▲now](https://zeit.co/now) deployments.
 
-Usage: `notnow [options]`
+Usage: `nowrm [options]`
 
 | Option | Description |
 | ---------- | ---------- |
@@ -13,10 +13,10 @@ Usage: `notnow [options]`
 #### Examples:
 
 - Prompt for each deployment individually:  
-`$ notnow`
+`$ nowrm`
 
 - Remove all deployments:  
-`$ notnow --yes`
+`$ nowrm --yes`
 
 - Remove all deployments except those specified:  
-`$ notnow --yes --keep <project1>,<hash1>,<hash2>`
+`$ nowrm --yes --keep <project1>,<hash1>,<hash2>`

@@ -1,5 +1,5 @@
 {
-  "name": "notnow",
+  "name": "nowrm",
   "version": "0.0.1",
   "description": "Automated removal of now deployments",
   "main": "index.js",
@@ -16,11 +16,11 @@
     "split": "^1.0.0"
   },
   "bin": {
-    "notnow": "./index.js"
+    "nowrm": "./index.js"
   },
   "preferGlobal": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/JohnTasto/notnow.git"
+    "url": "https://github.com/JohnTasto/nowrm.git"
   }
 }
