@@ -1,13 +1,13 @@
 # notnow
 
-#### Automate removal of now deployments.
+#### Automate removal of [Zeit ▲now](https://zeit.co/now) deployments.
 
 Usage: `notnow [options]`
 
 | Option | Description |
 | ---------- | ---------- |
 | `-y, --yes` | automatically confirm removal |
-| `-o, --old' | ignore latest deployment of each project |
+| `-o, --old` | ignore latest deployment of each project |
 | `-k, --keep <projects/hashes>` | ignore specified projects and deployments |
 
 #### Examples:
